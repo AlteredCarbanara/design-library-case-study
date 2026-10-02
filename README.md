@@ -1,43 +1,37 @@
-# Finding twenty times more screens in a sprawling design library
+# Finding one screen in a large design library
 
-During an internal hackweek at a previous employer, I built a small tool to make a very large Figma design library searchable. It had grown to around a hundred separate files, and finding a specific screen meant knowing which file it lived in, then scrolling. The usual answer was to ask whoever had touched that file most recently.
+I am a multidisciplinary designer, not an engineer: five years as a digital production designer, graphic design before that, and a lot of content management work. I know enough HTML and CSS to follow a front-end conversation, and I can talk to developers and designers both, and tell either one exactly what I need. I built this with Cursor, an AI coding tool, as much to learn whether AI-assisted coding was something I could use day to day as to solve the problem in front of me.
 
-What I wanted was an index: type a few words, get a link that opens the exact frame in Figma.
+## The problem
 
-## The flat scan that nearly ended it
+During an internal hackweek at a previous employer, a Figma design library had grown to around a hundred separate files. People needed one specific screen out of it, fairly often. Getting it meant already knowing which file it lived in, or asking whoever had worked on that file last. Neither of those is a way to find something.
 
-Figma has a public REST API that returns a file's contents as a tree of nodes. My first version asked each file for its pages, walked each page's children, and wrote every frame it saw to a JSON index.
+## Why a web page and not a chatbot
 
-It found 118 frames across the entire library.
+A colleague had already done the hard, unglamorous part. They had gathered the underlying data, a record of what was in the library and where each screen sat, and they were building a chatbot on top of it that you would ask questions.
 
-That was obviously wrong. I could open one file by hand and count more frames than that on a single page. I spent most of a day assuming I had hit a rate limit or missed a pagination parameter, because the requests were succeeding and the data looked well-formed.
+Looking at the same data, I thought the interface was the wrong shape for the problem. Finding a screen is a visual task. You usually do not know the words for what you want, you know it when you see it, and most of the time you are choosing between several near identical options. A conversation asks you to describe the thing before you are allowed to look at anything. A page can just show you.
 
-## The insight: the tree is deeper than it looks
+So I made that case, took the same data as my foundation, and built the other version.
 
-The frames were not direct children of the pages. They sat inside section nodes, and sections can contain further sections, nested as deep as whoever built the file wanted. That is how people organize a file once it gets big.
+## What I built
 
-My scan only read one level down from each page. Every section it met, it treated as a leaf and moved past, skipping everything inside. The 118 frames were the handful somebody had left loose at the top level.
+A single search box. You type a few words, suggestions appear as you type, and one click opens that exact screen in Figma. No knowing which file to open first, no scrolling through a file hoping to recognise something.
 
-The fix was to stop iterating and start recursing: visit a node, and if it has children, descend, collecting frames at any depth rather than only the first.
+The predictive part was deliberate. People almost always arrive with some idea of what they are after, even if they cannot name it exactly, so offering matches from the first few characters saves them finishing the thought. It also quietly teaches you what is in the library, because you see near misses on the way to what you wanted.
 
-Same API, same files, same access. The recursive traversal found 2,310+ frames, roughly twenty times as many.
+Most of my time went on how it behaved rather than whether it worked. Which matches come first. How much context a result needs to show, because a screen name on its own is often not enough to tell two similar screens apart. What the page says when nothing matches, so a dead end still tells you something. How to get from a result to the screen itself in one click instead of three. A light version and a dark one.
 
-## The second problem, visible only once I could see everything
-
-Many of the newly discovered frames had names useless for searching: generic defaults like `Frame 412`, or a component's own name repeated dozens of times in one file. Finding them was now possible; finding the *right* one still wasn't.
-
-The recursive walk already knew the path it had taken to reach each frame, so it also knew the frame's enclosing group, and those groups were usually named descriptively, because a person had named them deliberately. When a frame's own name was generic, I labeled it with its nearest meaningfully named ancestor instead. That turned thousands of interchangeable names into text a search box could work with.
+None of that is technical. It is the same judgement I use on any piece of production work, applied to a tool instead of a layout.
 
 ## What happened to it
 
-Nothing. It was a hackweek build. I demoed it, nobody picked it up, and it never became part of anyone's workflow. It was not adopted and never shipped. I also can't publish the code or the index: it was built on company time, and the index is effectively a map of a private design library. That's why this is a write-up rather than a repository.
+Nothing. It was a hackweek build. I demoed it, nobody picked it up, and it never became part of anyone's workflow. I also can't share what was built or the library data behind it: it was made on company time, and that data describes a private design library. So this is a write-up, not a download.
 
 ## What I took from it
 
-**A number that looks wrong usually is wrong.** The API was never the constraint. I spent a day debugging my requests when the bug was in my assumption about the response's shape.
+**A working prototype argues better than a document.** I could have written up why a page beats a conversation for this. Instead people could type a word and watch the right screen open. It did not win in the end, but it was the only version of the argument anyone could actually try, and that is a better position to argue from than a page of reasoning.
 
-**Reach for recursion when the data is a tree.** It usually is: design files, file systems, nested documents. A flat pass over a tree doesn't fail loudly; it quietly returns a plausible-looking fraction and lets you believe it.
+**The shape of the interface mattered more than what was behind it.** The data was identical in both versions. The entire difference was whether you had to describe what you wanted or could simply look at it. That decision was not a technical one and it was the most valuable thing I contributed.
 
-**Discovery and labeling are separate problems.** Finding everything is what made the naming problem visible, and naming was the difference between a list and a usable tool.
-
-The traversal is the transferable part. It isn't specific to any one library; it follows from the API and from how people organize files in it. That's the piece I'd write again.
+**An AI tool builds what you describe, not what you know.** Cursor did whatever I asked, quickly, and never once told me a decision was weak. Because getting it running stopped being the hard part, nearly all of my effort went into wording, ordering, context and the number of clicks. Knowing what good looks like and being able to describe it precisely turned out to be the whole job, and that is the part I was already trained for.
